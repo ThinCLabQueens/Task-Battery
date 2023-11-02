@@ -412,6 +412,24 @@ for file in tqdm(os.listdir("Tasks/log_file")):
                             #wr.writerow(list(line_dict.keys()))
                             wr.writerow(list(line_dict.values()))
                         task_name = row[10]
+                        for _ in ["Absorption_response",
+                                    "Other_response",
+                                    "Problem_response",
+                                    "Words_response",
+                                    "Sounds_response",
+                                    "Images_response",
+                                    "Past_response",
+                                    "Distracting_response",
+                                    "Focus_response",
+                                    "Intrusive_response",
+                                    "Deliberate_response",
+                                    "Detailed_response",
+                                    "Future_response",
+                                    "Emotion_response",
+                                    "Self_response",
+                                    "Knowledge_response"]:
+                            line_dict[_] = None
+                        
                         line_dict[row[3]]=row[4]
                         line_dict["Task_name"] = task_name.replace(" ","_")
                     ##print(row)
