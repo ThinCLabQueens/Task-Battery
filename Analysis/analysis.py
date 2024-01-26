@@ -1,6 +1,7 @@
 
 import os
 import csv
+import copy
 import numpy as np
 os.chdir(".")
 graddict = {}
@@ -120,15 +121,19 @@ def sortingfunction(exp,row,resps):
                 if row[2] == 'noResponse':
                     if row[9] == 'Type: Go':
                         resps[exp]["Accuracy_Go"].append(False)
+                        resps[exp]["Accuracy_All"].append(False)
                 if row[2].upper() == 'FALSE':
                     if row[9] == 'Type: Go':
                         resps[exp]["Accuracy_Go"].append(True)
+                        resps[exp]["Accuracy_All"].append(True)
                 if row[2].upper() == 'FALSE':
                     if row[9] == 'Type: NoGo':
                         resps[exp]["Accuracy_NoGo"].append(False)
+                        resps[exp]["Accuracy_All"].append(False)
                 if row[2].upper() == 'TRUE':
                     if row[9] == 'Type: NoGo':
                         resps[exp]["Accuracy_NoGo"].append(True)
+                        resps[exp]["Accuracy_All"].append(True)
         except Exception as e:
             #print(e)
             pass
@@ -339,7 +344,7 @@ for file in tqdm(os.listdir("Tasks/log_file")):
     
     ftemp = file.split('.')[0]
     resps = {"Experience_Sampling_Questions":{"Response_Time":[]},
-             "GoNoGo_Task":{"Response_Time":[], "Accuracy_Go":[],"Accuracy_NoGo":[]},
+             "GoNoGo_Task":{"Response_Time":[], "Accuracy_Go":[],"Accuracy_NoGo":[],"Accuracy_All":[]},
              "Finger_Tapping_Task":{"Response_Time":[], "Accuracy":[]},
              "Two-Back_Task-faces":{"Response_Time":[], "Accuracy":[]},
              "Two-Back_Task-scenes":{"Response_Time":[], "Accuracy":[]},
@@ -473,17 +478,30 @@ for file in tqdm(os.listdir("Tasks/log_file")):
                         sortingfunction(expdict["Experiment"],row,resps)  
                     
                 #print(row)
+        newresps = copy.copy(resps)
+        for rsp in ["GoNoGo_Task","Finger_Tapping_Task","Two-Back_Task-faces",
+                    "Two-Back_Task-scenes","One-Back_Task","Zero-Back_Task",
+                    "Hard_Math_Task","Easy_Math_Task"]:
+            o = newresps[rsp]
+            if rsp == "GoNoGo_Task":
+                
+                realtrials = [o["Response_Time"][e] for e,x in enumerate(o["Accuracy_All"]) if x ]
+                #o["Response_Time"][o["Accuracy_All"]]
+            else:
+                realtrials = [o["Response_Time"][e] for e,x in enumerate(o["Accuracy"]) if x ]
+            newresps[rsp] = np.mean(realtrials)
+            print('')
         with open("Analysis/accuracy.csv","a",newline="") as f:
             newdict = {"Subject":resps['Subject'],
              "Experience_Sampling_Questions_Response_Time":np.mean(resps['Experience_Sampling_Questions']['Response_Time']),
-             "GoNoGo_Task_Response_Time":np.mean(resps['GoNoGo_Task']['Response_Time']), "NoGo_Task_Accuracy":(resps['GoNoGo_Task']['Accuracy_NoGo'].count(True)/len(resps['GoNoGo_Task']['Accuracy_NoGo'])), "Go_Task_Accuracy":(resps['GoNoGo_Task']['Accuracy_Go'].count(True)/len(resps['GoNoGo_Task']['Accuracy_Go'])),
-             "Finger_Tapping_Task_Response_Time":np.mean(resps['Finger_Tapping_Task']['Response_Time']), "Finger_Tapping_Task_Accuracy":(resps['Finger_Tapping_Task']['Accuracy'].count(True)/len(resps['Finger_Tapping_Task']['Accuracy'])),
-             "Two-Back_Task-faces_Response_Time":np.mean(resps['Two-Back_Task-faces']['Response_Time']), "Two-Back_Task-faces_Accuracy":(resps['Two-Back_Task-faces']['Accuracy'].count(True)/len(resps['Two-Back_Task-faces']['Accuracy'])),
-             "Two-Back_Task-scenes_Response_Time":np.mean(resps['Two-Back_Task-scenes']['Response_Time']), "Two-Back_Task-scenes_Accuracy":(resps['Two-Back_Task-scenes']['Accuracy'].count(True)/len(resps['Two-Back_Task-scenes']['Accuracy'])),
-             "One-Back_Task_Response_Time":np.mean(resps['One-Back_Task']['Response_Time']), "One-Back_Task_Accuracy":(resps['One-Back_Task']['Accuracy'].count(True)/len(resps['One-Back_Task']['Accuracy'])),
-             "Zero-Back_Task_Response_Time":np.mean(resps['Zero-Back_Task']['Response_Time']), "Zero-Back_Task_Accuracy":(resps['Zero-Back_Task']['Accuracy'].count(True)/len(resps['Zero-Back_Task']['Accuracy'])),
-             "Hard_Math_Task_Response_Time":np.mean(resps['Hard_Math_Task']['Response_Time']), "Hard_Math_Task_Accuracy":(resps['Hard_Math_Task']['Accuracy'].count(True)/len(resps['Hard_Math_Task']['Accuracy'])),
-             "Easy_Math_Task_Response_Time":np.mean(resps['Easy_Math_Task']['Response_Time']), "Easy_Math_Task_Accuracy":(resps['Easy_Math_Task']['Accuracy'].count(True)/len(resps['Easy_Math_Task']['Accuracy'])),
+             "GoNoGo_Task_Response_Time":newresps['GoNoGo_Task'], "NoGo_Task_Accuracy":(resps['GoNoGo_Task']['Accuracy_NoGo'].count(True)/len(resps['GoNoGo_Task']['Accuracy_NoGo'])), "Go_Task_Accuracy":(resps['GoNoGo_Task']['Accuracy_Go'].count(True)/len(resps['GoNoGo_Task']['Accuracy_Go'])),
+             "Finger_Tapping_Task_Response_Time":newresps['Finger_Tapping_Task'], "Finger_Tapping_Task_Accuracy":(resps['Finger_Tapping_Task']['Accuracy'].count(True)/len(resps['Finger_Tapping_Task']['Accuracy'])),
+             "Two-Back_Task-faces_Response_Time":newresps['Two-Back_Task-faces'], "Two-Back_Task-faces_Accuracy":(resps['Two-Back_Task-faces']['Accuracy'].count(True)/len(resps['Two-Back_Task-faces']['Accuracy'])),
+             "Two-Back_Task-scenes_Response_Time":newresps['Two-Back_Task-scenes'], "Two-Back_Task-scenes_Accuracy":(resps['Two-Back_Task-scenes']['Accuracy'].count(True)/len(resps['Two-Back_Task-scenes']['Accuracy'])),
+             "One-Back_Task_Response_Time":newresps['One-Back_Task'], "One-Back_Task_Accuracy":(resps['One-Back_Task']['Accuracy'].count(True)/len(resps['One-Back_Task']['Accuracy'])),
+             "Zero-Back_Task_Response_Time":newresps['Zero-Back_Task'], "Zero-Back_Task_Accuracy":(resps['Zero-Back_Task']['Accuracy'].count(True)/len(resps['Zero-Back_Task']['Accuracy'])),
+             "Hard_Math_Task_Response_Time":newresps['Hard_Math_Task'], "Hard_Math_Task_Accuracy":(resps['Hard_Math_Task']['Accuracy'].count(True)/len(resps['Hard_Math_Task']['Accuracy'])),
+             "Easy_Math_Task_Response_Time":newresps['Easy_Math_Task'], "Easy_Math_Task_Accuracy":(resps['Easy_Math_Task']['Accuracy'].count(True)/len(resps['Easy_Math_Task']['Accuracy'])),
              "Friend_Task_Response_Time":np.mean(resps['Friend_Task']['Response_Time']), "Friend_Task_Sentiment":(resps['Friend_Task']['Sentiment'].count(True)/(len(resps['Friend_Task']['Sentiment']) + 1e-6)),
              "You_Task_Response_Time":np.mean(resps['You_Task']['Response_Time']), "You_Task_Sentiment":(resps['You_Task']['Sentiment'].count(True)/(len(resps['You_Task']['Sentiment']) + 1e-6))
              }
